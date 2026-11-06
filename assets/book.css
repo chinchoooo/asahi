@@ -10,7 +10,7 @@ body:has(.bk) .petals{display:none}
 .rd-home{font:700 1.9rem/1 var(--hand);color:var(--text);transform:rotate(-3deg);display:inline-block;transition:color .2s}.rd-home:hover{color:var(--sun)}
 .bk-frame{font:italic 400 1rem/1.4 var(--display);color:var(--muted)}
 
-.bk{--ink:#e3dfd3;--ink2:#bab5a7;--dim:#9a958a;--paper:#11110f;--rule:rgba(227,223,211,.15);--acc:#f1c3a0;
+.bk{--ink:#e6e0d2;--ink2:#bab5a7;--dim:#9a958a;--paper:#11110f;--paper-bg:rgba(19,20,25,.95);--rule:rgba(227,223,211,.15);--acc:#f1c3a0;--edge1:#5a5a60;--edge2:#2c2c32;--tl:5px;--tr:5px;--bp:clamp(10px,1.4vw,18px);
   --padX:44px;--padT:56px;--padB:56px;--gap:88px;--pw:540px;--ph:600px;--vw:1168px;
   max-width:1280px;margin:0 auto;padding:0 clamp(.75rem,3vw,2rem);color:var(--ink);color-scheme:dark}
 .bk :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:2px}
@@ -27,7 +27,7 @@ body:has(.bk) .petals{display:none}
 @media(max-width:560px){.bk-pos{display:none}.bk-jump{margin-left:auto}}
 
 /* the dark paper */
-.bk-stage{position:relative;overflow:hidden;border:1px solid var(--rule);border-radius:6px;background-color:rgba(12,13,19,.88);
+.bk-stage{position:relative;overflow:hidden;border:1px solid var(--rule);border-radius:6px;background-color:var(--paper-bg);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .88 0 0 0 0 .82 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(120% 90% at 50% 0%,#171714,#0e0e0c 70%);
   box-shadow:0 34px 60px -38px #000,inset 0 0 0 1px rgba(255,255,255,.02)}
 
@@ -200,3 +200,44 @@ body.reader{background:#07080c;min-height:100dvh}
 .lw.under{z-index:5}
 .paper-b{background:#0d0e14}
 @media print{.rd-scene{display:none}}
+
+/* ══ the object: boards, a page block with thickness, a curved gutter, a ribbon ══ */
+.bk-book{position:relative;padding:var(--bp);border-radius:12px;background:linear-gradient(160deg,#15161c,#0b0c10);box-shadow:0 50px 90px -34px #000,0 14px 30px -12px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.06),inset 0 2px 0 rgba(255,255,255,.05);transition:background .7s,box-shadow .7s}
+.bk-book .bk-stage{border:0;border-radius:3px;box-shadow:inset 0 0 40px rgba(0,0,0,.35),inset 0 0 0 1px rgba(255,255,255,.03)}
+/* the leaves under the boards, thicker on the side you have read */
+.ed{position:absolute;z-index:0;pointer-events:none;transition:width .6s,height .6s,opacity .5s}
+.ed.el{top:calc(var(--bp) + 4px);bottom:calc(var(--bp) + 4px);left:calc(var(--bp) - var(--tl));width:var(--tl);background:repeating-linear-gradient(90deg,var(--edge2) 0 1px,var(--edge1) 1px 2px);border-radius:2px 0 0 2px}
+.ed.er{top:calc(var(--bp) + 4px);bottom:calc(var(--bp) + 4px);right:calc(var(--bp) - var(--tr));width:var(--tr);background:repeating-linear-gradient(90deg,var(--edge1) 0 1px,var(--edge2) 1px 2px);border-radius:0 2px 2px 0}
+.ed.eb{left:calc(var(--bp) + 2px);right:calc(var(--bp) + 2px);bottom:calc(var(--bp) - 7px);height:7px;background:repeating-linear-gradient(0deg,var(--edge2) 0 1px,var(--edge1) 1px 2px);border-radius:0 0 2px 2px}
+.bk-stage{z-index:1}
+.rib{position:absolute;z-index:8;left:50%;top:calc(var(--bp) + 10px);width:6px;height:calc(var(--ph) + 80px);margin-left:-3px;background:linear-gradient(90deg,#7d4430,#b97c5c 50%,#7d4430);opacity:.92;clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 12px),0 100%);box-shadow:0 0 8px rgba(0,0,0,.5);pointer-events:none;transition:opacity .5s}
+.bk[data-n="1"] .rib,.bk[data-mode=scroll] .rib,.bk[data-mode=scroll] .ed{display:none}
+.bk[data-n="1"] .ed.el,.bk[data-n="1"] .ed.er{--tl:3px;--tr:3px}
+/* closed: just the hardcover, no pages */
+.bk-book.closed{background:transparent;box-shadow:none}
+.bk-book.closed .bk-stage{background:transparent!important;background-image:none!important;box-shadow:none;backdrop-filter:none}
+.bk-book.closed .ed,.bk-book.closed .rib{opacity:0}
+.bk-book.closed .bk-stage::before,.bk-book.closed .bk-stage::after{opacity:0!important}
+/* the gutter: two leaves curving down into the spine */
+.bk[data-mode=paged][data-n="2"] .bk-stage::before{width:calc(var(--gap) + 190px);background:linear-gradient(90deg,transparent 0,rgba(0,0,0,.1) 20%,rgba(0,0,0,.4) 40%,rgba(0,0,0,.78) 50%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.1) 80%,transparent 100%)}
+/* chapter openings: small caps for the first line, a short rule under the title */
+.bk .ch-h+.prose p:first-child::first-line{font-variant:small-caps;letter-spacing:.07em}
+.bk .ch-h::after{content:"";display:block;width:2.6rem;height:1px;background:var(--acc);margin-top:1.1rem;opacity:.8}
+
+/* ── day paper: the same book in lamplight ── */
+.bk[data-paper=day]{--ink:#2a261f;--ink2:#4d463a;--dim:#7d7566;--paper-bg:#e9e1cd;--rule:rgba(42,38,31,.18);--acc:#a04e2c;--edge1:#e2dbc6;--edge2:#a9a18b}
+.bk[data-paper=day] .bk-stage{background-image:linear-gradient(90deg,rgba(0,0,0,.05),transparent 8%,transparent 92%,rgba(0,0,0,.05))!important;box-shadow:inset 0 0 50px rgba(120,100,60,.22)}
+.bk[data-paper=day] .prose em,.bk[data-paper=day] .ttl,.bk[data-paper=day] .d,.bk[data-paper=day] .fc,.bk[data-paper=day] .toc-a,.bk[data-paper=day] .tp-a,.bk[data-paper=day] .tp-t{color:var(--ink)}
+.bk[data-paper=day] .w.on{color:#000;background:rgba(160,78,44,.2)}
+.bk[data-paper=day] .ch-listen,.bk[data-paper=day] .ch-play,.bk[data-paper=day] .bk-turn,.bk[data-paper=day] .tp-s,.bk[data-paper=day] .colophon p{color:var(--ink2)}
+.bk[data-paper=day] .t,.bk[data-paper=day] .film-n,.bk[data-paper=day] .toc-n,.bk[data-paper=day] .col-y{color:var(--dim)!important}
+.bk[data-paper=day] .bk-stage::before{background:linear-gradient(90deg,transparent 0,rgba(60,40,10,.08) 22%,rgba(60,40,10,.28) 42%,rgba(40,25,5,.5) 50%,rgba(60,40,10,.28) 58%,rgba(60,40,10,.08) 78%,transparent 100%)!important}
+.bk[data-paper=day] .lf,.bk[data-paper=day] .lw{background:#e9e1cd}
+
+/* arriving from the landing page: the sun shrinks away */
+@media(prefers-reduced-motion:no-preference){
+ body.reader::before{content:"";position:fixed;inset:0;z-index:300;background:#f1c3a0;pointer-events:none;clip-path:circle(150vmax at 50% 46%);animation:veil 1.05s cubic-bezier(.65,0,.2,1) .05s both}
+ @keyframes veil{to{clip-path:circle(0 at 50% 46%)}}
+}
+
+.bk .cvr{box-shadow:0 40px 70px -20px #000,0 0 0 1px rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06)}

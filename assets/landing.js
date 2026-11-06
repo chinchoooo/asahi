@@ -1,7 +1,8 @@
-// asahi landing: pointer parallax, the sun cursor, the sun toggle, the opening book, turning cards, small jokes.
+// asahi landing: pointer parallax, the sun cursor, the sun toggle, a book that opens as you scroll, a curtain into the reader, turning cards.
 (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const root = document.documentElement;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const hero = $('.hero');
@@ -36,33 +37,50 @@
     try { localStorage.setItem('asahi.dawn', on ? '1' : '0'); } catch (e) {}
   });
 
-  // the book: it follows the pointer, opens when pressed, then you step inside
+  // reading progress, and the book that opens as the page scrolls past it
+  const prog = $('.prog'), story = $('.story'), beats = $$('.beat');
+  const scrub = () => {
+    const max = root.scrollHeight - innerHeight;
+    prog.style.setProperty('--sp', max > 0 ? (scrollY / max).toFixed(4) : 0);
+    if (!story || calm()) return;
+    const r = story.getBoundingClientRect(), span = story.offsetHeight - innerHeight;
+    const p = clamp(-r.top / span, 0, 1);
+    story.style.setProperty('--o', clamp((p - .1) / .5, 0, 1).toFixed(3));
+    const b = p < .24 ? 0 : p < .58 ? 1 : 2;
+    beats.forEach((el, i) => el.classList.toggle('on', i === b));
+  };
+  addEventListener('scroll', () => requestAnimationFrame(scrub), { passive: true });
+  addEventListener('resize', scrub);
+  if (calm()) story && story.style.setProperty('--o', '.7');
+  scrub();
+
+  // the book also leans toward the pointer
   const book = $('.b3');
-  if (book) {
-    const go = book.dataset.href;
-    if (fine && !calm()) {
-      book.addEventListener('pointermove', (e) => {
-        const r = book.getBoundingClientRect();
-        book.style.setProperty('--rx', ((e.clientX - r.left) / r.width - .5) * 50);
-        book.style.setProperty('--ry', ((e.clientY - r.top) / r.height - .5) * 30);
-        book.classList.add('live');
-      });
-      book.addEventListener('pointerleave', () => { book.classList.remove('live'); book.style.removeProperty('--rx'); book.style.removeProperty('--ry'); });
-    }
-    book.addEventListener('click', () => {
-      if (book.classList.contains('open')) return;
-      book.classList.add('open', 'live');
-      if (calm()) { location.href = go; return; }
-      setTimeout(() => document.body.classList.add('leaving'), 1500);
-      setTimeout(() => { location.href = go; }, 2100);
+  if (book && fine && !calm()) {
+    book.addEventListener('pointermove', (e) => {
+      const r = book.getBoundingClientRect();
+      book.style.setProperty('--rx', ((e.clientX - r.left) / r.width - .5) * 30);
+      book.style.setProperty('--ry', ((e.clientY - r.top) / r.height - .5) * 20);
     });
+    book.addEventListener('pointerleave', () => { book.style.removeProperty('--rx'); book.style.removeProperty('--ry'); });
   }
-  // the lede link takes the same way in
+
+  // entering the book: a peach circle grows from where you pressed, then the reader's sun shrinks away
+  let going = false;
+  const enter = (href, x, y) => {
+    if (going) return; going = true;
+    if (calm()) { location.href = href; return; }
+    const v = document.createElement('div'); v.className = 'veil';
+    v.style.setProperty('--vx', x + 'px'); v.style.setProperty('--vy', y + 'px');
+    document.body.append(v); void v.offsetWidth; v.classList.add('go');
+    setTimeout(() => { location.href = href; }, 900);
+  };
   $$('[data-enter]').forEach((a) => a.addEventListener('click', (e) => {
-    if (calm() || e.metaKey || e.ctrlKey || e.shiftKey || !book) return;
-    e.preventDefault(); book.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => book.click(), 700);
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+    e.preventDefault(); enter(a.href, e.clientX || innerWidth / 2, e.clientY || innerHeight / 2);
   }));
+  if (book) book.addEventListener('click', (e) => enter(book.dataset.href, e.clientX || innerWidth / 2, e.clientY || innerHeight / 2));
+  addEventListener('pageshow', (e) => { if (e.persisted) { going = false; $$('.veil').forEach((v) => v.remove()); } });
 
   // things on the desk: hover turns them; touch turns them with a tap
   $$('.thing').forEach((t) => {

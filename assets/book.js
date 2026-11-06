@@ -16,7 +16,7 @@
   const keep = (patch) => { Object.assign(saved, patch); try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
 
   const stage = $('#bk-stage'), view = $('#bk-view'), flow = $('#bk-flow'), prevB = $('#bk-prev'), nextB = $('#bk-next');
-  const modeB = $('#bk-mode'), posEl = $('#bk-pos'), status = $('#bk-status'), run = $('#bk-run');
+  const book = $('#bk-book'), paperB = $('#bk-paper'), modeB = $('#bk-mode'), posEl = $('#bk-pos'), status = $('#bk-status'), run = $('#bk-run');
   const [rl, rr, fl, fr] = ['.rl', '.rr', '.fl', '.fr'].map((s) => $(s, run));
   const chapters = $$('.ch', flow).map((el, i) => ({ el, i, id: el.id, t: +el.dataset.t, label: $('.lbl', el).textContent, title: $('.ttl', el).textContent, words: [] }));
   const keyEls = [];
@@ -116,6 +116,9 @@
     flow.classList.toggle('snap', !move || (leaf && old !== 0));
     flow.style.transform = `translate3d(${-p * S.stride + shift}px,0,0)`;
     bk.classList.toggle('single', shift !== 0);
+    book.classList.toggle('closed', S.n === 2 && p === 0);
+    const prog = S.total > 2 ? p / (S.total - 2) : 0;
+    book.style.setProperty('--tl', (2 + prog * 9).toFixed(1) + 'px'); book.style.setProperty('--tr', (2 + (1 - prog) * 9).toFixed(1) + 'px');
     if (move && !leaf) {
       view.classList.remove('turn-n', 'turn-p'); void view.offsetWidth;
       view.classList.add(p > old ? 'turn-n' : 'turn-p');
@@ -166,6 +169,9 @@
   // ───────── turning pages: click, keys, swipe, links, focus ─────────
   prevB.addEventListener('click', () => show(S.cur - S.n, { user: true }));
   nextB.addEventListener('click', () => show(S.cur + S.n, { user: true }));
+  const setPaper = (d) => { bk.dataset.paper = d ? 'day' : 'night'; paperB.setAttribute('aria-pressed', String(d)); keep({ paper: d ? 'day' : 'night' }); };
+  paperB.addEventListener('click', () => setPaper(bk.dataset.paper !== 'day'));
+  if (saved.paper === 'day') { bk.dataset.paper = 'day'; paperB.setAttribute('aria-pressed', 'true'); }
   modeB.addEventListener('click', () => setMode(S.mode === 'paged' ? 'scroll' : 'paged'));
   addEventListener('keydown', (e) => {
     if (S.mode !== 'paged' || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
