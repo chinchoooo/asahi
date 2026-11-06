@@ -21,7 +21,7 @@ const html = `<!DOCTYPE html>
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="${esc(full)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:type" content="book">
 ${book.og ? `<meta property="og:image" content="${abs(book.og)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${abs(book.og)}">` : ''}
-<meta name="theme-color" content="#0e0e0d"><link rel="icon" href="data:,">
+<meta name="theme-color" content="#0e0e0d"><link rel="icon" type="image/png" sizes="48x48" href="${cfg.base}/assets/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="${cfg.base}/assets/icon-192.png"><link rel="apple-touch-icon" href="${cfg.base}/assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..500;1,9..144,300..500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..500&family=DM+Mono:wght@400;500&family=Shippori+Mincho:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${cfg.base}/assets/site.css">
