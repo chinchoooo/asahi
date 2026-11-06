@@ -1,0 +1,12 @@
+/* the few site tokens the reader (book.css) expects; the page is dark paper in any theme */
+:root{--bg:#0e0e0d;--bg2:#161614;--line:rgba(233,229,220,.15);--text:#e9e5dc;--muted:#b2ac9f;--dim:#8d887c;--accent:#ef5b3f;
+--display:'Fraunces',Georgia,serif;--serif:'Source Serif 4','Source Serif Pro',Georgia,serif;--mono:'DM Mono',ui-monospace,Menlo,monospace;--jp:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;overflow-x:clip}
+body{background:var(--bg);color:var(--text);font:300 clamp(16px,.3vw + 15px,18px)/1.8 var(--serif);-webkit-font-smoothing:antialiased;overflow-wrap:break-word;overflow-x:clip;padding-bottom:2rem}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-family:var(--display);font-weight:300;letter-spacing:-.012em}
+.jp{font-family:var(--jp);font-weight:400}
+.wrap{width:100%;max-width:1040px;margin:0 auto;padding:0 clamp(1.25rem,5vw,2.5rem)}
+::selection{background:var(--accent);color:var(--bg)}
+@media(prefers-reduced-motion:reduce){html:not(.motion-ok){scroll-behavior:auto}html:not(.motion-ok) *{animation:none!important;transition:none!important}}
