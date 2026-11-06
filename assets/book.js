@@ -36,7 +36,7 @@
     const padX = S.n === 2 ? 48 : W < 480 ? 30 : 40;
     S.gap = S.n === 2 ? 96 : 0;
     S.pw = Math.min(580, Math.floor((W - 2 * padX - (S.n - 1) * S.gap) / S.n));
-    S.ph = clamp(innerHeight - 280, 420, 760);
+    S.ph = clamp(innerHeight - 294, 400, 780);
     S.stride = S.pw + S.gap;
     const v = S.n * S.pw + (S.n - 1) * S.gap;
     const set = (k, x) => bk.style.setProperty(k, x + 'px');
@@ -65,6 +65,43 @@
     posEl.textContent = s ? (s.ch >= 0 ? `${chapters[s.ch].label} · p. ${foot || ''}`.replace(/ · p\. $/, '') : nm[s.k] || '') : '';
   }
 
+  // ── the 3D leaf: copies of two pages, hinged at the spine, turn like paper ──
+  const killLeaf = () => { if (S.leaf) { S.leaf.an.cancel(); S.leaf.els.forEach((e) => e.remove()); S.leaf = null; } };
+  function clone(page, x, w) {
+    const win = document.createElement('div'); win.className = 'lw';
+    win.style.cssText = `left:${x}px;width:${w}px;height:${S.ph}px`;
+    const c = flow.cloneNode(true);
+    c.removeAttribute('id'); c.removeAttribute('aria-live'); c.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id'));
+    c.classList.add('snap'); c.style.transform = `translate3d(${-page * S.stride}px,0,0)`;
+    win.append(c); return win;
+  }
+  function leafTurn(old, p) {
+    killLeaf();
+    const { pw, gap, ph } = S, sp = pw + gap / 2, fwd = p > old, dur = old === 0 ? 1100 : 760;
+    const lf = document.createElement('div'), f = document.createElement('div'), b = document.createElement('div'), under = [];
+    lf.className = 'bk-leaf' + (fwd ? '' : ' back'); f.className = 'lf'; b.className = 'lf lb';
+    lf.inert = true; lf.setAttribute('aria-hidden', 'true'); lf.style.setProperty('--dur', dur + 'ms');
+    let frames, to = fwd ? -180 : 180;
+    if (old === 0) { // the cover opens on its own hinge
+      lf.style.cssText += `;left:${(pw + gap) / 2}px;width:${pw}px;height:${ph}px;transform-origin:0 50%`;
+      f.append(clone(1, 0, pw)); b.classList.add('paper-b');
+      frames = [{ transform: 'rotateY(0deg)', opacity: 1 }, { offset: .78, opacity: 1 }, { transform: 'rotateY(-172deg)', opacity: 0 }];
+    } else if (fwd) {
+      lf.style.cssText += `;left:${sp}px;width:${pw + gap / 2}px;height:${ph}px;transform-origin:0 50%`;
+      f.append(clone(old + 1, gap / 2, pw)); b.append(clone(p, gap / 2, pw));
+      under.push(clone(old, 0, pw));
+    } else {
+      lf.style.cssText += `;left:0;width:${sp}px;height:${ph}px;transform-origin:100% 50%`;
+      f.append(clone(old, 0, pw)); b.append(clone(p + 1, 0, pw));
+      under.push(clone(old + 1, pw + gap, pw));
+    }
+    under.forEach((u) => u.classList.add('under'));
+    lf.append(f, b); view.append(...under, lf);
+    const an = lf.animate(frames || [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${to}deg)` }], { duration: dur, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
+    S.leaf = { els: [lf, ...under], an };
+    an.onfinish = () => killLeaf();
+  }
+
   function show(p, o = {}) {
     if (S.mode !== 'paged') return;
     p = clamp(p, 0, S.total - 1);
@@ -72,10 +109,14 @@
     const old = S.cur; S.cur = p;
     const shift = S.n === 2 ? (p === 0 ? -S.stride / 2 : p >= S.total - 1 ? S.stride / 2 : 0) : 0;
     const move = !o.instant && !calm() && p !== old;
-    flow.classList.toggle('snap', !move);
+    const lastOne = (i) => i >= S.total - 1;
+    const leaf = move && S.n === 2 && p > 0 && !lastOne(old) && !lastOne(p) && Math.abs(p - old) >= 2;
+    killLeaf();
+    if (leaf) leafTurn(old, p);
+    flow.classList.toggle('snap', !move || (leaf && old !== 0));
     flow.style.transform = `translate3d(${-p * S.stride + shift}px,0,0)`;
     bk.classList.toggle('single', shift !== 0);
-    if (move) {
+    if (move && !leaf) {
       view.classList.remove('turn-n', 'turn-p'); void view.offsetWidth;
       view.classList.add(p > old ? 'turn-n' : 'turn-p');
       clearTimeout(S.tt); S.tt = setTimeout(() => view.classList.remove('turn-n', 'turn-p'), 520);
@@ -199,10 +240,27 @@
       if (A.ra) follow(t);
     };
     const setPlayIcon = () => { playB.innerHTML = audio.paused ? ICON.play : ICON.pause; playB.setAttribute('aria-label', label()); };
+    // the dawn behind the book breathes with the narration (same-origin audio only, so playback is never rerouted when it is remote)
+    const AMP = { ctx: null, an: null, buf: null, v: 0 };
+    const wire = () => {
+      if (AMP.ctx || calm()) return;
+      try {
+        if (new URL(audio.currentSrc || audio.src, location.href).origin !== location.origin) return;
+        const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+        AMP.ctx = new AC(); const src = AMP.ctx.createMediaElementSource(audio);
+        AMP.an = AMP.ctx.createAnalyser(); AMP.an.fftSize = 256; AMP.an.smoothingTimeConstant = .85; AMP.buf = new Uint8Array(AMP.an.frequencyBinCount);
+        src.connect(AMP.an); AMP.an.connect(AMP.ctx.destination);
+      } catch (e) { AMP.ctx = null; }
+    };
+    const level = () => { if (!AMP.an) return 0; AMP.an.getByteFrequencyData(AMP.buf); let s = 0; for (let i = 2; i < 40; i++) s += AMP.buf[i]; return Math.min(1, s / 38 / 140); };
     let raf = 0;
-    const tick = () => { raf = 0; syncUI(); if (!audio.paused) raf = requestAnimationFrame(tick); };
-    audio.addEventListener('play', () => { setPlayIcon(); if (video) video.pause(); if (!raf) raf = requestAnimationFrame(tick); });
-    audio.addEventListener('pause', () => { setPlayIcon(); syncUI(); keep({ t: audio.currentTime }); });
+    const tick = () => {
+      raf = 0; syncUI();
+      if (AMP.an) { AMP.v += (level() - AMP.v) * .22; root.style.setProperty('--amp', AMP.v.toFixed(3)); }
+      if (!audio.paused) raf = requestAnimationFrame(tick);
+    };
+    audio.addEventListener('play', () => { wire(); if (AMP.ctx) AMP.ctx.resume().catch(() => {}); setPlayIcon(); if (video) video.pause(); if (!raf) raf = requestAnimationFrame(tick); });
+    audio.addEventListener('pause', () => { AMP.v = 0; root.style.setProperty('--amp', '0'); setPlayIcon(); syncUI(); keep({ t: audio.currentTime }); });
     audio.addEventListener('ended', () => { setPlayIcon(); keep({ t: 0 }); });
     audio.addEventListener('timeupdate', () => { if (audio.paused) syncUI(); });
     audio.addEventListener('loadedmetadata', () => { if (A.pend && !audio.currentTime) audio.currentTime = A.pend; A.pend = 0; syncUI(); });
@@ -334,6 +392,10 @@
       else if (kind) embed(t);
     }));
   }
+
+  // the dawn behind the book leans with the pointer
+  const scene = $('.rd-scene');
+  if (scene && !calm()) addEventListener('pointermove', (e) => { scene.style.setProperty('--px', (e.clientX / innerWidth * 2 - 1).toFixed(3)); scene.style.setProperty('--py', (e.clientY / innerHeight * 2 - 1).toFixed(3)); }, { passive: true });
 
   // ───────── open ─────────
   const wantPaged = saved.mode !== 'scroll';

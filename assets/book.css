@@ -6,11 +6,11 @@
 body:has(.bk) .petals{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 
-.bk-top{padding-top:clamp(1.4rem,4vw,3rem);padding-bottom:1.3rem}
-.bk-top .back{display:inline-block;margin-bottom:1.6rem;font-size:.8rem;color:var(--muted)}.bk-top .back:hover{color:var(--accent)}
-.bk-frame{font:italic 300 clamp(1.1rem,2.2vw,1.4rem)/1.5 var(--display);color:var(--muted)}
+.rd-top{display:flex;align-items:baseline;gap:.6rem 1.4rem;flex-wrap:wrap;max-width:1280px;margin:0 auto;padding:max(.9rem,env(safe-area-inset-top)) clamp(1rem,3vw,2rem) .5rem}
+.rd-home{font:700 1.9rem/1 var(--hand);color:var(--text);transform:rotate(-3deg);display:inline-block;transition:color .2s}.rd-home:hover{color:var(--sun)}
+.bk-frame{font:italic 400 1rem/1.4 var(--display);color:var(--muted)}
 
-.bk{--ink:#e3dfd3;--ink2:#bab5a7;--dim:#9a958a;--paper:#11110f;--rule:rgba(227,223,211,.15);--acc:#f0775f;
+.bk{--ink:#e3dfd3;--ink2:#bab5a7;--dim:#9a958a;--paper:#11110f;--rule:rgba(227,223,211,.15);--acc:#f1c3a0;
   --padX:44px;--padT:56px;--padB:56px;--gap:88px;--pw:540px;--ph:600px;--vw:1168px;
   max-width:1280px;margin:0 auto;padding:0 clamp(.75rem,3vw,2rem);color:var(--ink);color-scheme:dark}
 .bk :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:2px}
@@ -27,12 +27,12 @@ body:has(.bk) .petals{display:none}
 @media(max-width:560px){.bk-pos{display:none}.bk-jump{margin-left:auto}}
 
 /* the dark paper */
-.bk-stage{position:relative;overflow:hidden;border:1px solid var(--rule);border-radius:6px;background-color:var(--paper);
+.bk-stage{position:relative;overflow:hidden;border:1px solid var(--rule);border-radius:6px;background-color:rgba(12,13,19,.88);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .88 0 0 0 0 .82 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(120% 90% at 50% 0%,#171714,#0e0e0c 70%);
   box-shadow:0 34px 60px -38px #000,inset 0 0 0 1px rgba(255,255,255,.02)}
 
 /* ── prose (shared by every mode) ── */
-.bk .prose{font:400 clamp(1rem,.25vw + .95rem,1.08rem)/1.74 var(--serif);color:var(--ink);hyphens:auto;-webkit-hyphens:auto;text-wrap:pretty}
+.bk .prose{font:400 clamp(1.1rem,.3vw + 1.03rem,1.24rem)/1.62 var(--serif);color:var(--ink);hyphens:auto;-webkit-hyphens:auto;text-wrap:pretty}
 .bk .prose p{margin:0;text-indent:1.5em;orphans:2;widows:2}
 .bk .ch-h+.prose p:first-child{text-indent:0}
 .bk .prose em{color:var(--ink);font-style:italic}
@@ -45,7 +45,7 @@ body:has(.bk) .petals{display:none}
 .bk .ch-listen:hover,.bk .ch-play:hover{color:var(--acc)}
 .bk .ch-listen svg,.bk .ch-play svg{width:.8rem;height:.8rem;fill:currentColor;flex:none}
 .bk .w{border-radius:2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-color .25s,color .25s}
-.bk .w.on{background:rgba(240,119,95,.22);color:#fff}
+.bk .w.on{background:rgba(241,195,160,.22);color:#fff}
 .bk .pg-h{font:italic 300 clamp(1.5rem,2.5vw,1.95rem)/1.2 var(--display);margin:0 0 1.4rem;color:var(--ink);break-after:avoid}
 
 /* ── front matter ── */
@@ -151,17 +151,17 @@ body:has(.bk) .petals{display:none}
 body:has(.bk-player:not([hidden])){padding-bottom:6.5rem}
 .bk-player{position:fixed;z-index:50;left:50%;bottom:calc(.8rem + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(660px,calc(100% - 1.4rem));background:#0f0f0d;color:#e3dfd3;color-scheme:dark;border:1px solid rgba(227,223,211,.18);border-radius:8px;box-shadow:0 18px 40px -14px #000;padding:.2rem .7rem .55rem}
 .bk-player[hidden]{display:none}
-.bk-player::before{content:"";position:absolute;top:-9px;left:1.1rem;width:13px;height:22px;background:#ef5b3f;clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%)}
+.bk-player::before{content:"";position:absolute;top:-9px;left:1.1rem;width:13px;height:22px;background:#e9a77a;clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%)}
 .bp-seek{display:block;width:calc(100% + 1.4rem);margin:0 -.7rem;height:14px;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;--p:0%}
-.bp-seek::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,#f0775f var(--p),rgba(227,223,211,.2) var(--p))}
-.bp-seek::-moz-range-track{height:2px;background:rgba(227,223,211,.2)}.bp-seek::-moz-range-progress{height:2px;background:#f0775f}
+.bp-seek::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,#f1c3a0 var(--p),rgba(227,223,211,.2) var(--p))}
+.bp-seek::-moz-range-track{height:2px;background:rgba(227,223,211,.2)}.bp-seek::-moz-range-progress{height:2px;background:#f1c3a0}
 .bp-seek::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;margin-top:-4.5px;border-radius:50%;background:#e3dfd3;border:0}
 .bp-seek::-moz-range-thumb{width:11px;height:11px;border-radius:50%;background:#e3dfd3;border:0}
-.bp-seek:focus-visible{outline:2px solid #f0775f;outline-offset:-2px}
+.bp-seek:focus-visible{outline:2px solid #f1c3a0;outline-offset:-2px}
 .bp-row{display:flex;align-items:center;gap:.35rem .5rem;flex-wrap:wrap;padding-top:.15rem}
 .bp-b{font:400 .72rem var(--mono);color:#bab5a7;background:none;border:1px solid transparent;border-radius:999px;padding:.4rem .65rem;cursor:pointer;min-height:2.2rem;transition:color .2s,border-color .2s}
 .bp-b:hover{color:#fff;border-color:rgba(227,223,211,.25)}
-.bp-b[aria-pressed=true]{color:#fff;border-color:#f0775f}
+.bp-b[aria-pressed=true]{color:#fff;border-color:#f1c3a0}
 .bp-play{width:2.5rem;height:2.5rem;flex:none;border-radius:50%;background:#e3dfd3;border:0;color:#0f0f0d;cursor:pointer;display:grid;place-items:center;transition:background .2s}
 .bp-play:hover{background:#fff}
 .bp-play svg{width:1rem;height:1rem;fill:currentColor}
@@ -178,3 +178,25 @@ body:has(.bk-player:not([hidden])){padding-bottom:6.5rem}
 /* one-up: the film's chapter list stays on one page, so titles are cut to a line */
 .bk[data-n="1"][data-mode=paged] .filmch .d{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bk[data-n="1"][data-mode=paged] .filmch .fc{padding:.42rem 0}
+
+/* ══ immersive: the dawn behind the book, 3D leaves, a sun that follows the narration ══ */
+body.reader{background:#07080c;min-height:100dvh}
+.rd-scene{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#05060a;--px:0;--py:0}
+.rd-scene img{position:absolute;inset:-4%;width:108%;height:108%;object-fit:cover;opacity:.55;filter:saturate(.7) brightness(.7);transform:translate3d(calc(var(--px) * -1.2%),calc(var(--py) * -1%),0) scale(1.04);animation:rd-drift 90s ease-in-out infinite alternate}
+.rd-scene::after{content:"";position:absolute;inset:0;background:radial-gradient(110% 90% at 50% 40%,transparent 30%,rgba(5,6,10,.85))}
+.rd-sun{position:absolute;right:12%;top:12%;width:clamp(90px,14vw,200px);aspect-ratio:1;border-radius:50%;background:#f1c3a0;mix-blend-mode:screen;opacity:calc(.28 + var(--amp, 0) * .6);transform:scale(calc(1 + var(--amp, 0) * .3));transition:opacity .12s linear,transform .12s linear}
+@keyframes rd-drift{from{transform:translate3d(-1.5%,0,0) scale(1.06)}to{transform:translate3d(1.5%,-1%,0) scale(1.1)}}
+.bk-stage{backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px)}
+.bk[data-mode=paged] .bk-view{perspective:2600px}
+/* the turning leaf: two faces clipped from copies of the pages, hinged at the spine */
+.bk-leaf{position:absolute;top:0;z-index:6;transform-style:preserve-3d;pointer-events:none}
+.bk-leaf .lf{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#101119}
+.bk-leaf .lb{transform:rotateY(180deg)}
+.bk-leaf .lf::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.5),transparent 40%,rgba(255,255,255,.04));opacity:0;animation:lf-shade var(--dur,.8s) ease-in-out both}
+.bk-leaf.back .lf::after{background:linear-gradient(270deg,rgba(0,0,0,.5),transparent 40%,rgba(255,255,255,.04))}
+@keyframes lf-shade{50%{opacity:1}100%{opacity:.15}}
+.lw{position:absolute;top:0;overflow:hidden;background:#101119}
+.lw .bk-flow{position:absolute!important;left:0;top:0}
+.lw.under{z-index:5}
+.paper-b{background:#0d0e14}
+@media print{.rd-scene{display:none}}

@@ -1,4 +1,5 @@
 # asahi
 
-the things we learn to carry: a disguised memoir. Built with `npm ci && npm run build`, deployed to GitHub Pages at `/asahi/`.
-Film: set `book.FILM_URL` in `config.json` (YouTube/Vimeo link or a direct mp4). Empty shows "coming soon".
+Landing page for the pen name (`/asahi/`) and the immersive reader for "the things we learn to carry" (`/asahi/read/`).
+`npm ci && npm run build` -> `dist/`, deployed by GitHub Pages. Film: `book.FILM_URL` in `config.json`.
+Unlisted on purpose: noindex, no links to or from anything else.
