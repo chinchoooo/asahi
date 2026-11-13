@@ -10,8 +10,9 @@ setBase(B);
 const book = loadBook(cfg);
 if (!book) { console.error('book/the_things_we_learn_to_carry.md is missing'); process.exit(1); }
 
-const FONTS = 'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=EB+Garamond:ital,wght@0,400..600;1,400..500&family=Shippori+Mincho:wght@400&family=Space+Mono&display=swap';
-const page = ({ title, desc, url, css, body, js, bodyClass = '' }) => `<!DOCTYPE html>
+// fonts are self-hosted (assets/fonts, declared in site.css); each page preloads the two faces it shows first
+const FONT = { hand: 'caveat-700', serif: 'eb-garamond', italic: 'eb-garamond-italic' };
+const page = ({ title, desc, url, css, body, js, bodyClass = '', fonts = [] }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -22,8 +23,7 @@ const page = ({ title, desc, url, css, body, js, bodyClass = '' }) => `<!DOCTYPE
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:type" content="website">
 <meta name="theme-color" content="#0b0d13">
 <link rel="icon" type="image/png" sizes="48x48" href="${B}/assets/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="${B}/assets/icon-192.png"><link rel="apple-touch-icon" href="${B}/assets/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="${FONTS}" rel="stylesheet">
+${fonts.map((f) => `<link rel="preload" href="${B}/assets/fonts/${FONT[f]}.woff2" as="font" type="font/woff2" crossorigin>`).join('')}
 ${css.map((c) => `<link rel="stylesheet" href="${B}/assets/${c}.css">`).join('')}
 </head>
 <body${bodyClass ? ` class="${bodyClass}"` : ''}>
@@ -39,8 +39,8 @@ ${bookPage(book)}
 fs.rmSync('dist', { recursive: true, force: true });
 fs.mkdirSync('dist/read', { recursive: true });
 fs.cpSync('assets', 'dist/assets', { recursive: true });
-fs.writeFileSync('dist/index.html', page({ title: PEN, desc: `${PEN}, a pen name. ${SUB}: the things we learn to carry. ${FRAME}`, url: B + '/', css: ['site', 'landing'], body: landing(book, B), js: 'landing' }));
-fs.writeFileSync('dist/read/index.html', page({ title: `${TITLE} — ${PEN}`, desc: `${SUB} by ${PEN}. ${FRAME}`, url: B + '/read/', css: ['site', 'book'], body: reader, js: 'book', bodyClass: 'reader' }));
+fs.writeFileSync('dist/index.html', page({ title: PEN, desc: `${PEN}, a pen name. ${SUB}: the things we learn to carry. ${FRAME}`, url: B + '/', css: ['site', 'landing'], body: landing(book, B), js: 'landing', fonts: ['hand', 'serif'] }));
+fs.writeFileSync('dist/read/index.html', page({ title: `${TITLE} — ${PEN}`, desc: `${SUB} by ${PEN}. ${FRAME}`, url: B + '/read/', css: ['site', 'book'], body: reader, js: 'book', bodyClass: 'reader', fonts: ['serif', 'italic'] }));
 fs.writeFileSync('dist/robots.txt', 'User-agent: *\nDisallow: /\n');
 fs.writeFileSync('dist/404.html', '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="robots" content="noindex"><title>not found</title><body style="background:#0b0d13;color:#b3ada2;font:20px Georgia,serif;display:grid;place-items:center;min-height:100vh;margin:0">nothing here. the sun is that way.</body>');
 // the site is unlisted on purpose: every built page says noindex, and none may name the author or the portfolio host
@@ -50,6 +50,21 @@ for (const f of walk('dist').filter((f) => f.endsWith('.html'))) {
   const h = fs.readFileSync(f, 'utf8');
   if (!/<meta\s+name="robots"\s+content="[^"]*noindex/i.test(h)) problem(f, 'missing <meta name="robots" content="noindex">');
   for (const re of FORBIDDEN) if (re.test(h)) problem(f, `forbidden content: ${re}`);
+}
+// zero third-party requests: nothing the browser loads by itself (stylesheets, scripts, images, fonts, media) may come from another host
+for (const f of walk('dist').filter((f) => /\.(html|css)$/.test(f))) {
+  const h = fs.readFileSync(f, 'utf8');
+  for (const m of h.matchAll(/<(?:link|script|img|source|video|audio|iframe|track)\b[^>]*\b(?:href|src|poster|srcset)="(https?:)?\/\/[^"]*"|url\((["']?)(?:https?:)?\/\/[^)]*\)/gi)) problem(f, `third-party request: ${m[0].slice(0, 120)}`);
+}
+// every kanji on the pages must fall in a Shippori Mincho slice that site.css declares (else it silently falls back)
+{
+  const css = fs.readFileSync('assets/site.css', 'utf8');
+  const ranges = [...css.matchAll(/font-family:'Shippori Mincho'[^}]*unicode-range:([^;}]+)/g)].flatMap((m) => m[1].split(',').map((r) => r.trim().slice(2).split('-').map((x) => parseInt(x, 16))));
+  const html = ['dist/index.html', 'dist/read/index.html', 'dist/404.html'].map((f) => fs.readFileSync(f, 'utf8')).join('');
+  for (const ch of new Set(html.match(/[　-鿿]/g) || [])) {
+    const c = ch.codePointAt(0);
+    if (!ranges.some(([a, z = a]) => c >= a && c <= z)) problem('assets/site.css', `kanji ${ch} (U+${c.toString(16)}) is not covered by a self-hosted Shippori Mincho slice; add the slice from fonts.gstatic.com`);
+  }
 }
 for (const f of ['dist/sitemap.xml', 'dist/sitemap-index.xml']) if (fs.existsSync(f)) problem(f, 'no sitemap: the site is unlisted');
 if (problems.length) { console.error(problems.join('\n')); process.exit(1); }
