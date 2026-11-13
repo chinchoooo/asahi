@@ -8,15 +8,19 @@
   let cfg = {}; try { cfg = JSON.parse(bk.dataset.cfg); } catch (e) {}
   const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches && !root.classList.contains('motion-ok');
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fmt = (s) => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0'); };
 
   // reader state survives reloads: where you were, how far the narration got, and your switches
   const KEY = 'book.v1';
   const saved = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })();
+  // flat page turn (a short slide, no 3D leaf): reduced motion, weak devices, a slow first turn, or the reader's own choice
+  const weak = () => (navigator.hardwareConcurrency || 8) <= 4 && navigator.deviceMemory && navigator.deviceMemory <= 4;
+  const isFlat = () => (saved.flat === 'on' ? true : saved.flat === 'off' ? false : reduced() || weak() || !!saved.auto);
   const keep = (patch) => { Object.assign(saved, patch); try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
 
   const stage = $('#bk-stage'), view = $('#bk-view'), flow = $('#bk-flow'), prevB = $('#bk-prev'), nextB = $('#bk-next');
-  const book = $('#bk-book'), paperB = $('#bk-paper'), modeB = $('#bk-mode'), posEl = $('#bk-pos'), status = $('#bk-status'), run = $('#bk-run');
+  const flatB = $('#bk-flat'), book = $('#bk-book'), paperB = $('#bk-paper'), modeB = $('#bk-mode'), posEl = $('#bk-pos'), status = $('#bk-status'), run = $('#bk-run');
   const [rl, rr, fl, fr] = ['.rl', '.rr', '.fl', '.fr'].map((s) => $(s, run));
   const chapters = $$('.ch', flow).map((el, i) => ({ el, i, id: el.id, t: +el.dataset.t, label: $('.lbl', el).textContent, title: $('.ttl', el).textContent, words: [] }));
   const keyEls = [];
@@ -36,7 +40,8 @@
     const padX = S.n === 2 ? 48 : W < 480 ? 30 : 40;
     S.gap = S.n === 2 ? 96 : 0;
     S.pw = Math.min(580, Math.floor((W - 2 * padX - (S.n - 1) * S.gap) / S.n));
-    S.ph = clamp(innerHeight - 294, 400, 780);
+    const pl0 = $('#bk-player'), pl = pl0 && !pl0.hidden ? pl0.offsetHeight : 0, hd = $('.rd-top').offsetHeight, br = $('.bk-bar').offsetHeight;
+    S.ph = clamp(innerHeight - (hd + br + 28 + 112 + pl + 24), 300, 780);
     S.stride = S.pw + S.gap;
     const v = S.n * S.pw + (S.n - 1) * S.gap;
     const set = (k, x) => bk.style.setProperty(k, x + 'px');
@@ -99,6 +104,13 @@
     lf.append(f, b); view.append(...under, lf);
     const an = lf.animate(frames || [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${to}deg)` }], { duration: dur, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
     S.leaf = { els: [lf, ...under], an };
+    // frame times of the first measured 3D turn: a slow device is moved to the flat turn for good
+    if (saved.flat === undefined && !saved.measured) {
+      const d = []; let last = performance.now(); const t0 = last;
+      const f = (now) => { d.push(now - last); last = now; if (now - t0 < dur) requestAnimationFrame(f); else done(); };
+      const done = () => { d.sort((a, b) => a - b); const p95 = d[Math.floor(d.length * .95)] || 0; keep({ measured: 1, p95: Math.round(p95), auto: p95 > 28 ? 1 : 0 }); if (p95 > 28) relayout(); };
+      requestAnimationFrame(f);
+    }
     an.onfinish = () => killLeaf();
   }
 
@@ -108,9 +120,10 @@
     if (S.n === 2) p -= p % 2;
     const old = S.cur; S.cur = p;
     const shift = S.n === 2 ? (p === 0 ? -S.stride / 2 : p >= S.total - 1 ? S.stride / 2 : 0) : 0;
-    const move = !o.instant && !calm() && p !== old;
+    const flat = isFlat(), move = !o.instant && p !== old;
+    bk.classList.toggle('flat', flat); flatB.setAttribute('aria-pressed', String(flat));
     const lastOne = (i) => i >= S.total - 1;
-    const leaf = move && S.n === 2 && p > 0 && !lastOne(old) && !lastOne(p) && Math.abs(p - old) >= 2;
+    const leaf = move && !flat && S.n === 2 && p > 0 && !lastOne(old) && !lastOne(p) && Math.abs(p - old) >= 2;
     killLeaf();
     if (leaf) leafTurn(old, p);
     flow.classList.toggle('snap', !move || (leaf && old !== 0));
@@ -126,6 +139,7 @@
     }
     prevB.disabled = p <= 0; nextB.disabled = p + S.n >= S.total;
     chrome();
+    if (o.focus) view.focus({ preventScroll: true });
     if (o.user) { status.textContent = `page ${p + 1}${S.n === 2 && p + 2 <= S.total ? ' and ' + (p + 2) : ''} of ${S.total}`; nudge(); }
     if (!o.noSave) keep({ loc: keyNow() });
   }
@@ -169,6 +183,20 @@
   // ───────── turning pages: click, keys, swipe, links, focus ─────────
   prevB.addEventListener('click', () => show(S.cur - S.n, { user: true }));
   nextB.addEventListener('click', () => show(S.cur + S.n, { user: true }));
+  flatB.addEventListener('click', () => { keep({ flat: isFlat() ? 'off' : 'on' }); relayout(); });
+  // text size, three steps
+  const sizeBs = $$('.bk-size button');
+  const setSize = (n, init) => { bk.dataset.size = n; sizeBs.forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.size === n))); if (!init) { keep({ size: n }); relayout(); } };
+  sizeBs.forEach((b) => b.addEventListener('click', () => setSize(+b.dataset.size)));
+  setSize(clamp(+saved.size || 0, 0, 2), true);
+  // phone header: Aa and menu open small sheets
+  const sheets = [['#rd-aa', '#sh-aa'], ['#rd-menu', '#sh-menu']].map(([b, s]) => ({ b: $(b), s: $(s) }));
+  const veil = document.createElement('div'); veil.className = 'sheet-veil'; veil.hidden = true; document.body.append(veil);
+  const closeSheets = (back) => { sheets.forEach((x) => { x.s.classList.remove('open'); x.b.setAttribute('aria-expanded', 'false'); }); veil.hidden = true; if (back) back.focus(); };
+  sheets.forEach((x) => x.b.addEventListener('click', () => { const was = x.s.classList.contains('open'); closeSheets(); if (!was) { x.s.classList.add('open'); x.b.setAttribute('aria-expanded', 'true'); veil.hidden = false; } }));
+  veil.addEventListener('click', () => closeSheets());
+  $('#sh-menu').addEventListener('click', (e) => { if (e.target.closest('a')) closeSheets(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !veil.hidden) { const o = sheets.find((x) => x.s.classList.contains('open')); closeSheets(o && o.b); } });
   const setPaper = (d) => { bk.dataset.paper = d ? 'day' : 'night'; paperB.setAttribute('aria-pressed', String(d)); keep({ paper: d ? 'day' : 'night' }); };
   paperB.addEventListener('click', () => setPaper(bk.dataset.paper !== 'day'));
   if (saved.paper === 'day') { bk.dataset.paper = 'day'; paperB.setAttribute('aria-pressed', 'true'); }
@@ -178,10 +206,11 @@
     if (/INPUT|TEXTAREA|SELECT|VIDEO|AUDIO/.test(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
     const pal = $('.pal'); if (pal && !pal.hidden) return;
     const k = e.key;
-    if (k === 'ArrowRight' || k === 'PageDown') show(S.cur + S.n, { user: true });
-    else if (k === 'ArrowLeft' || k === 'PageUp') show(S.cur - S.n, { user: true });
-    else if (k === 'Home') show(0, { user: true });
-    else if (k === 'End') show(S.total, { user: true });
+    const free = !/BUTTON|^A$/.test(document.activeElement.tagName);
+    if (k === 'ArrowRight' || k === 'PageDown' || (k === ' ' && !e.shiftKey && free)) show(S.cur + S.n, { user: true, focus: true });
+    else if (k === 'ArrowLeft' || k === 'PageUp' || (k === ' ' && e.shiftKey && free)) show(S.cur - S.n, { user: true, focus: true });
+    else if (k === 'Home') show(0, { user: true, focus: true });
+    else if (k === 'End') show(S.total, { user: true, focus: true });
     else return;
     e.preventDefault();
   });
@@ -190,7 +219,14 @@
   view.addEventListener('pointerup', (e) => {
     if (!sw || S.mode !== 'paged') return;
     const dx = e.clientX - sw.x, dy = e.clientY - sw.y; const quick = e.timeStamp - sw.t < 900; sw = null;
-    if (quick && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) show(S.cur + (dx < 0 ? S.n : -S.n), { user: true });
+    if (quick && Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) show(S.cur + (dx < 0 ? S.n : -S.n), { user: true, focus: true });
+    else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && quick && !e.target.closest('a,button,video,iframe,input')) {
+      // tap: right third next, left third previous, middle toggles the chrome
+      const r = view.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+      if (x > 2 / 3) show(S.cur + S.n, { user: true, focus: true });
+      else if (x < 1 / 3) show(S.cur - S.n, { user: true, focus: true });
+      else document.body.classList.toggle('chrome-off');
+    }
   });
   view.addEventListener('pointercancel', () => { sw = null; });
   view.addEventListener('scroll', () => { view.scrollLeft = 0; view.scrollTop = 0; });
@@ -236,11 +272,20 @@
     const t0 = +saved.t > 0 ? +saved.t : 0;
     if (t0) { A.pend = t0; try { audio.currentTime = t0; } catch (e) {} }
 
+    // chapter title: static when it fits; slides to and fro only when it overflows (never cut with an ellipsis)
+    let shown = '';
+    const setTitle = (txt) => {
+      if (txt === shown) return; shown = txt;
+      try { if ('mediaSession' in navigator && navigator.mediaSession.metadata) { navigator.mediaSession.metadata.title = txt; } } catch (e) {}
+      const inner = chEl.firstElementChild; inner.textContent = txt;
+      chEl.classList.remove('mq');
+      requestAnimationFrame(() => { const over = inner.scrollWidth - chEl.clientWidth; if (over > 4 && !reduced()) { chEl.style.setProperty('--sh', -(over) + 'px'); chEl.style.setProperty('--mq', Math.max(5, over / 22) + 's'); chEl.classList.add('mq'); } });
+    };
     syncUI = () => {
       const t = A.pend && audio.paused && !audio.currentTime ? A.pend : audio.currentTime, d = dur();
       seek.max = d; seek.value = t; seek.style.setProperty('--p', (t / d * 100) + '%');
       timeEl.textContent = `${fmt(t)} / ${fmt(d)}`;
-      const c = chAt(t); chEl.textContent = `${c.label} — ${c.title}`;
+      const c = chAt(t); setTitle(`${c.label} — ${c.title}`);
       seek.setAttribute('aria-valuetext', `${fmt(t)} of ${fmt(d)}, ${c.label}`);
       if (performance.now() - A.saveAt > 2000) { A.saveAt = performance.now(); keep({ t }); }
       if (A.ra) follow(t);
@@ -270,7 +315,7 @@
     audio.addEventListener('ended', () => { setPlayIcon(); keep({ t: 0 }); });
     audio.addEventListener('timeupdate', () => { if (audio.paused) syncUI(); });
     audio.addEventListener('loadedmetadata', () => { if (A.pend && !audio.currentTime) audio.currentTime = A.pend; A.pend = 0; syncUI(); });
-    audio.addEventListener('error', () => { chEl.textContent = 'the narration could not be loaded'; });
+    audio.addEventListener('error', () => { setTitle('the narration could not be loaded'); });
 
     const skip = (d) => { A.pend = 0; A.lastPage = -1; audio.currentTime = clamp(audio.currentTime + d, 0, dur()); syncUI(); };
     const playFrom = (t) => {
@@ -367,11 +412,14 @@
 
     if ('mediaSession' in navigator) {
       try {
-        navigator.mediaSession.metadata = new MediaMetadata({ title: cfg.title, artist: cfg.pen, album: 'a disguised memoir', artwork: cfg.cover ? [{ src: cfg.cover, sizes: '410x590', type: 'image/jpeg' }] : [] });
+        navigator.mediaSession.metadata = new MediaMetadata({ title: shown || cfg.title, artist: cfg.pen, album: 'a disguised memoir', artwork: cfg.cover ? [{ src: cfg.cover, sizes: '410x590', type: 'image/jpeg' }] : [] });
         navigator.mediaSession.setActionHandler('play', () => audio.play());
         navigator.mediaSession.setActionHandler('pause', () => audio.pause());
         navigator.mediaSession.setActionHandler('seekbackward', () => skip(-15));
         navigator.mediaSession.setActionHandler('seekforward', () => skip(15));
+        const hop = (d) => { const i = chapters.indexOf(chAt(audio.currentTime)), c = chapters[clamp(i + d, 0, chapters.length - 1)]; playFrom(c.t); };
+        navigator.mediaSession.setActionHandler('previoustrack', () => hop(-1));
+        navigator.mediaSession.setActionHandler('nexttrack', () => hop(1));
       } catch (e) {}
     }
     setPlayIcon(); syncUI();
