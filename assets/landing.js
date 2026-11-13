@@ -28,12 +28,19 @@
     document.addEventListener('pointerover', (e) => cur.classList.toggle('big', !!e.target.closest('a,button,.thing')));
   }
 
-  // press the sun: night / dawn
-  const sun = $('.sun');
-  try { if (localStorage.getItem('asahi.dawn') === '1') { root.classList.add('dawn'); sun.setAttribute('aria-pressed', 'true'); } } catch (e) {}
+  // the first-load entrance lasts about a second; scrolling, a key or a touch skips straight to the finished page
+  const skipIntro = () => root.classList.add('went');
+  if (scrollY > 40 || calm()) skipIntro();
+  else { ['scroll', 'wheel', 'touchmove', 'keydown'].forEach((t) => addEventListener(t, skipIntro, { once: true, passive: true })); setTimeout(skipIntro, 1500); }
+
+  // press the sun: night / dawn (the browser's toolbar colour follows the scene)
+  const sun = $('.sun'), theme = $('meta[name="theme-color"]');
+  const paint = (on) => { sun.setAttribute('aria-pressed', String(on)); if (theme) theme.content = on ? '#17110f' : '#0b0d13'; };
+  try { if (localStorage.getItem('asahi.dawn') === '1') { root.classList.add('dawn'); paint(true); } } catch (e) {}
   sun.addEventListener('click', () => {
     const on = root.classList.toggle('dawn');
-    sun.setAttribute('aria-pressed', String(on));
+    paint(on);
+    sun.classList.remove('pop'); void sun.offsetWidth; if (!calm()) sun.classList.add('pop');
     try { localStorage.setItem('asahi.dawn', on ? '1' : '0'); } catch (e) {}
   });
 
