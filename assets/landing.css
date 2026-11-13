@@ -196,3 +196,18 @@ body.leaving{animation:leave .7s ease forwards}
 .desk{scroll-margin-top:3rem}
 
 .foot .foot-word{font-size:clamp(9rem,40vw,36rem)}
+
+/* ══ phone layout (A1): wordmark, statement, buttons, then the polaroid with its caption underneath ══ */
+a,button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:560px){
+ .hero-in{padding-top:5.5rem;padding-bottom:5.5rem;gap:1.5rem}
+ .word{font-size:clamp(4.2rem,24vw,7rem);line-height:.9}
+ .sun{top:4.4rem;right:-1.6rem;width:clamp(96px,30vw,130px)}
+ .lede{margin-top:1rem;font-size:1.2rem}
+ .cta{flex-direction:column;align-items:stretch;gap:1rem;margin-top:1.4rem}
+ .btn{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:.5rem 1.4rem;text-align:center}
+ .alt{align-self:center;padding:.5rem .1rem .2rem}
+ .face{width:68vw;margin:1.5rem auto 0;justify-self:center;transform:rotate(-4deg)}
+ .note{position:static;display:flex;flex-direction:column;align-items:center;gap:.2rem;width:auto;max-width:22ch;margin:1.6rem auto 0;text-align:center;transform:none;font-size:1.4rem;line-height:1.1;text-shadow:0 1px 14px #000,0 0 3px rgba(0,0,0,.8)}
+ .note svg{order:-1;margin:0;transform:rotate(78deg)}
+}
