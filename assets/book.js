@@ -265,7 +265,7 @@
     const seek = $('.bp-seek', player), playB = $('.bp-play', player), chEl = $('.bp-ch', player), timeEl = $('.bp-time', player), rateB = $('.bp-rate', player), raB = $('.bp-ra', player);
     const ICON = { play: playB.dataset.play, pause: playB.dataset.pause };
     const dur = () => (isFinite(audio.duration) && audio.duration > 0 ? audio.duration : +seek.max || 1974);
-    const chAt = (t) => { let c = chapters[0]; for (const x of chapters) if (t >= x.t - 0.5) c = x; return c; };
+    const chAt = (t) => { let c = chapters[0]; for (const x of chapters) if (x.t >= 0 && t >= x.t - 0.5) c = x; return c; };
     const label = () => (audio.paused ? 'play' : 'pause');
     A.ri = Math.max(0, A.rates.indexOf(saved.rate || 1));
     audio.defaultPlaybackRate = audio.playbackRate = A.rates[A.ri]; rateB.textContent = A.rates[A.ri] + '×';
@@ -360,7 +360,7 @@
     function align() {
       const ptr = chapters.map(() => 0);
       for (const cue of A.cues) {
-        let ci = 0; chapters.forEach((c, i) => { if (cue.s >= c.t - 0.5) ci = i; });
+        let ci = 0; chapters.forEach((c, i) => { if (c.t >= 0 && cue.s >= c.t - 0.5) ci = i; });
         const ch = chapters[ci], toks = cue.text.split(/\s+/).map(norm).filter(Boolean), k = toks.length;
         cue.ch = ci; cue.a = cue.b = -1;
         if (!k) continue;
