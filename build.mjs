@@ -26,7 +26,7 @@ if (!book) { console.error('book/the_things_we_learn_to_carry.md is missing'); p
 
 // fonts are self-hosted (assets/fonts, declared in site.css); each page preloads the two faces it shows first
 const FONT = { hand: 'caveat-700', serif: 'eb-garamond', italic: 'eb-garamond-italic' };
-const page = ({ title, desc, url, css, body, js, bodyClass = '', fonts = [] }) => `<!DOCTYPE html>
+const page = ({ title, desc, url, css, body, js, bodyClass = '', fonts = [], theme = '#0b0d13' }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -35,14 +35,14 @@ const page = ({ title, desc, url, css, body, js, bodyClass = '', fonts = [] }) =
 <meta name="description" content="${esc(desc)}">
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:type" content="website">
-<meta name="theme-color" content="#0b0d13">
+<meta name="theme-color" content="${theme}"><meta name="color-scheme" content="dark">
 <link rel="icon" type="image/png" sizes="48x48" href="${B}/assets/icon-48.png"><link rel="icon" type="image/png" sizes="192x192" href="${B}/assets/icon-192.png"><link rel="apple-touch-icon" href="${B}/assets/apple-touch-icon.png">
 ${fonts.map((f) => `<link rel="preload" href="${B}/assets/fonts/${FONT[f]}.woff2" as="font" type="font/woff2" crossorigin>`).join('')}
 ${css.map((c) => `<link rel="stylesheet" href="${B}/assets/${c}.css">`).join('')}
 </head>
 <body${bodyClass ? ` class="${bodyClass}"` : ''}>
 ${body}
-<script type="module" src="${B}/assets/${js}.js"></script>
+${js ? `<script type="module" src="${B}/assets/${js}.js"></script>` : ''}
 </body></html>`;
 
 const reader = `<div class="rd-scene" aria-hidden="true">${pic(B, 'scene.jpg', 'alt="" width="1280" height="580" decoding="async"')}<i class="rd-sun"></i></div>
@@ -51,9 +51,9 @@ ${bookPage(book)}
 </main>`;
 
 fs.writeFileSync('dist/index.html', page({ title: PEN, desc: `${PEN}, a pen name. ${SUB}: the things we learn to carry. ${FRAME}`, url: B + '/', css: ['site', 'landing'], body: landing(book, B), js: 'landing', fonts: ['hand', 'serif'] }));
-fs.writeFileSync('dist/read/index.html', page({ title: `${TITLE} — ${PEN}`, desc: `${SUB} by ${PEN}. ${FRAME}`, url: B + '/read/', css: ['site', 'book'], body: reader, js: 'book', bodyClass: 'reader', fonts: ['serif', 'italic'] }));
+fs.writeFileSync('dist/read/index.html', page({ title: `${TITLE} — ${PEN}`, desc: `${SUB} by ${PEN}. ${FRAME}`, url: B + '/read/', css: ['site', 'book'], body: reader, js: 'book', bodyClass: 'reader', theme: '#07080c', fonts: ['serif', 'italic'] }));
 fs.writeFileSync('dist/robots.txt', 'User-agent: *\nDisallow: /\n');
-fs.writeFileSync('dist/404.html', '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><meta name="robots" content="noindex"><title>not found</title><body style="background:#0b0d13;color:#b3ada2;font:20px Georgia,serif;display:grid;place-items:center;min-height:100vh;margin:0">nothing here. the sun is that way.</body>');
+fs.writeFileSync('dist/404.html', page({ title: 'not found', desc: 'nothing here', url: B + '/', css: ['site'], fonts: ['hand', 'serif'], body: `<main class="nf"><h1>404</h1><p>nothing here. the sun is that way.</p><a href="${B}/">back to the sun</a></main>` }));
 // the site is unlisted on purpose: every built page says noindex, and none may name the author or the portfolio host
 const FORBIDDEN = [/Aravinth/i, /chinchoooo\.github\.io/i, /<meta[^>]+name="author"/i, /<script[^>]+(analytics|gtag|googletagmanager|plausible)/i];
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : [`${d}/${e.name}`]));
