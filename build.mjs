@@ -2,11 +2,25 @@
 import fs from 'node:fs';
 import { loadBook, bookPage, setBase, TITLE, SUB, PEN, FRAME } from './lib/book.mjs';
 import { landing } from './lib/landing.mjs';
-import { esc, problems, problem } from './lib/util.mjs';
+import { esc, problems, problem, IMG, pic } from './lib/util.mjs';
 
 const cfg = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 const B = cfg.base;
 setBase(B);
+fs.rmSync('dist', { recursive: true, force: true });
+fs.mkdirSync('dist/read', { recursive: true });
+fs.cpSync('assets', 'dist/assets', { recursive: true });
+// the photographs are also written as AVIF and WebP next to their JPEG/PNG (kept as the fallback); pages use <picture> for the ones that exist
+const PHOTOS = ['scene.jpg', 'face.png', 'book/cover.jpg', 'book/poster.jpg'];
+try {
+  const sharp = (await import('sharp')).default;
+  for (const f of PHOTOS) {
+    const src = `assets/${f}`, stem = `dist/assets/${f.replace(/\.\w+$/, '')}`;
+    await sharp(src).avif({ quality: 52, effort: 5 }).toFile(stem + '.avif');
+    await sharp(src).webp({ quality: 76, effort: 5 }).toFile(stem + '.webp');
+    IMG.add(f);
+  }
+} catch (e) { console.warn('images: sharp is not installed, so no AVIF/WebP (the JPEG/PNG are served): ' + e.message); }
 const book = loadBook(cfg);
 if (!book) { console.error('book/the_things_we_learn_to_carry.md is missing'); process.exit(1); }
 
@@ -31,14 +45,11 @@ ${body}
 <script type="module" src="${B}/assets/${js}.js"></script>
 </body></html>`;
 
-const reader = `<div class="rd-scene" aria-hidden="true"><img src="${B}/assets/scene.jpg" alt="" width="1280" height="580"><i class="rd-sun"></i></div>
+const reader = `<div class="rd-scene" aria-hidden="true">${pic(B, 'scene.jpg', 'alt="" width="1280" height="580" decoding="async"')}<i class="rd-sun"></i></div>
 <main id="main">
 ${bookPage(book)}
 </main>`;
 
-fs.rmSync('dist', { recursive: true, force: true });
-fs.mkdirSync('dist/read', { recursive: true });
-fs.cpSync('assets', 'dist/assets', { recursive: true });
 fs.writeFileSync('dist/index.html', page({ title: PEN, desc: `${PEN}, a pen name. ${SUB}: the things we learn to carry. ${FRAME}`, url: B + '/', css: ['site', 'landing'], body: landing(book, B), js: 'landing', fonts: ['hand', 'serif'] }));
 fs.writeFileSync('dist/read/index.html', page({ title: `${TITLE} — ${PEN}`, desc: `${SUB} by ${PEN}. ${FRAME}`, url: B + '/read/', css: ['site', 'book'], body: reader, js: 'book', bodyClass: 'reader', fonts: ['serif', 'italic'] }));
 fs.writeFileSync('dist/robots.txt', 'User-agent: *\nDisallow: /\n');
