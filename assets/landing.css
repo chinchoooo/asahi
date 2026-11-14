@@ -91,7 +91,7 @@ html .sun.pop{animation:pop var(--d2) var(--ease)}
 /* 600 to 1099: copy left, portrait right, caption beneath the portrait */
 @media(min-width:600px){
  .hero-in{grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);gap:var(--s6) clamp(var(--s5),4vw,var(--s8))}
- .hero{--wm:clamp(10rem,22vw,26rem)}
+ .hero{--wm:clamp(10rem,26vw,26rem)}
  .face{width:min(100%,22rem);margin:var(--s5) 0 0;justify-self:center}
  .sun-note{display:none}
 }
@@ -119,7 +119,7 @@ html .sun.pop{animation:pop var(--d2) var(--ease)}
 /* ══ scene 2: the book, a 3D object that opens as you scroll ══ */
 .story{position:relative;height:340svh;--o:0;margin-top:var(--s9)}
 .story-stick{position:sticky;top:0;height:100svh;display:grid;place-items:center;overflow:clip}
-.story-h{position:absolute;left:50%;top:48%;z-index:0;font-size:clamp(5.5rem,26vw,21rem);line-height:.8;white-space:nowrap;color:transparent;-webkit-text-stroke:2px rgba(233,227,214,.22);transform:translate(-50%,-50%) scale(calc(1 + var(--o) * .22));opacity:calc(1 - var(--o) * .55);pointer-events:none;user-select:none}
+.story-h{position:absolute;left:50%;top:48%;z-index:0;font-size:clamp(4rem,19vw,21rem);line-height:.8;white-space:nowrap;color:transparent;-webkit-text-stroke:2px rgba(233,227,214,.22);transform:translate(-50%,-50%) scale(calc(1 + var(--o) * .22));opacity:calc(1 - var(--o) * .55);pointer-events:none;user-select:none}
 .b3{--h:calc(var(--w) * 1.44);--d:calc(var(--w) * .2);display:block;margin:0;padding:0;border:0;background:none;perspective:1500px;width:var(--w);height:var(--h);cursor:pointer;color:inherit;position:relative}
 .b3::after{content:"";position:absolute;left:8%;right:-26%;bottom:-2.6rem;height:46px;background:radial-gradient(50% 50% at 50% 50%,rgba(0,0,0,.7),transparent 72%);filter:blur(6px)}
 .b3-i{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(7deg + var(--ry,0) * -1deg)) rotateY(calc(-30deg + var(--rx,0) * 1deg))}
@@ -149,15 +149,16 @@ html .sun.pop{animation:pop var(--d2) var(--ease)}
 .beats{position:absolute;z-index:2;left:clamp(var(--s4),6vw,6.5rem);top:50%;width:min(46vw,11ch);height:0;pointer-events:none;font:700 clamp(2.4rem,6vw,5rem)/.95 var(--hand);color:var(--text)}
 .beat{position:absolute;left:0;top:0;transform:translateY(calc(-50% + 24px));opacity:0;transition:opacity var(--d2) var(--ease),transform var(--d2) var(--ease);white-space:nowrap}
 .beat.on{opacity:1;transform:translateY(-50%)}
-.story-cta{position:absolute;z-index:3;left:50%;bottom:clamp(var(--s5),7vh,4rem);transform:translateX(-50%);opacity:calc(var(--o) * 3 - 1.7)}
+.story-cta .btn{white-space:nowrap}
+.story-cta{position:absolute;white-space:nowrap;z-index:3;left:50%;bottom:clamp(var(--s5),7vh,4rem);transform:translateX(-50%);opacity:calc(var(--o) * 3 - 1.7)}
 .story-cta:focus-within{opacity:1}
 .scrollhint{position:absolute;z-index:3;right:clamp(var(--s4),6vw,6rem);bottom:clamp(var(--s5),7vh,4rem);color:var(--sun);font-size:1.6rem;transform:rotate(-3deg);opacity:calc(1 - var(--o) * 6)}
 @media(max-width:700px){.beats{top:16%;left:var(--s5);width:12ch}.story-h{top:30%}.story .b3-i{transform:rotateX(calc(7deg - var(--o) * 5deg)) rotateY(calc(-30deg + var(--o) * 27deg)) translateX(calc(var(--w) * .38 * var(--o)))}}
 @media(min-width:1000px){.story .b3{margin-left:clamp(0px,14vw,16rem)}}
 
 /* the curtain into the reader */
-.veil{position:fixed;inset:0;z-index:300;background:var(--sun);clip-path:circle(0 at var(--vx, 50%) var(--vy, 50%));transition:clip-path var(--d3) var(--ease);pointer-events:none}
-.veil.go{clip-path:circle(150vmax at var(--vx, 50%) var(--vy, 50%))}
+.veil{position:fixed;z-index:300;left:var(--vx,50%);top:var(--vy,50%);width:300vmax;height:300vmax;margin:-150vmax 0 0 -150vmax;border-radius:50%;background:var(--sun);transform:scale(0);transition:transform var(--d3) var(--ease);pointer-events:none}
+.veil.go{transform:scale(1)}
 
 /* ══ scene 3: the film and the voice, with a few things beside them ══
    Phones: one column, each card its own width and side, a little overlap. Tablets: two columns, the film across both.

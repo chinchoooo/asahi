@@ -37,10 +37,11 @@
   function measure() {
     const W = stage.clientWidth;
     S.n = W >= 900 ? 2 : 1;
-    const padX = S.n === 2 ? 48 : W < 480 ? 30 : 40;
+    const padX = S.n === 2 ? 48 : W < 480 ? clamp(Math.round(W * .105), 30, 46) : 40;
     S.gap = S.n === 2 ? 96 : 0;
-    S.pw = Math.min(580, Math.floor((W - 2 * padX - (S.n - 1) * S.gap) / S.n));
+    S.pw = Math.min(S.n === 1 ? 480 : 580, Math.floor((W - 2 * padX - (S.n - 1) * S.gap) / S.n));
     const pl0 = $('#bk-player'), pl = pl0 && !pl0.hidden ? pl0.offsetHeight : 0, hd = $('.rd-top').offsetHeight, br = $('.bk-bar').offsetHeight;
+    if (pl) root.style.setProperty('--bpH', pl + 'px');
     S.ph = clamp(innerHeight - (hd + br + 28 + 112 + pl + 24), 300, 780);
     S.stride = S.pw + S.gap;
     const v = S.n * S.pw + (S.n - 1) * S.gap;
@@ -64,7 +65,7 @@
       rl.textContent = a.isCh && a.head ? 'asahi' : ''; rr.textContent = b.head;
       fl.textContent = a.foot; fr.textContent = b.foot;
     } else {
-      rl.textContent = a.head ? 'asahi' : ''; rr.textContent = a.head; fl.textContent = ''; fr.textContent = a.foot;
+      rl.textContent = ''; rr.textContent = a.head; fl.textContent = ''; fr.textContent = a.foot;
     }
     const useB = S.n === 2 && b.sec && b.sec.page === S.cur + 1, s = useB ? b.sec : a.sec || b.sec, foot = useB ? b.foot : a.foot || b.foot, nm = { cover: 'cover', endpaper: 'endpaper', end: 'endpaper', title: 'title page', film: 'the film', filmch: 'the film', contents: 'contents', colophon: 'colophon' };
     posEl.textContent = s ? (s.ch >= 0 ? `${chapters[s.ch].label} · p. ${foot || ''}`.replace(/ · p\. $/, '') : nm[s.k] || '') : '';
@@ -82,7 +83,7 @@
   }
   function leafTurn(old, p) {
     killLeaf();
-    const { pw, gap, ph } = S, sp = pw + gap / 2, fwd = p > old, dur = old === 0 ? 1100 : 760;
+    const { pw, gap, ph } = S, sp = pw + gap / 2, fwd = p > old, dur = 900;
     const lf = document.createElement('div'), f = document.createElement('div'), b = document.createElement('div'), under = [];
     lf.className = 'bk-leaf' + (fwd ? '' : ' back'); f.className = 'lf'; b.className = 'lf lb';
     lf.inert = true; lf.setAttribute('aria-hidden', 'true'); lf.style.setProperty('--dur', dur + 'ms');
@@ -102,7 +103,7 @@
     }
     under.forEach((u) => u.classList.add('under'));
     lf.append(f, b); view.append(...under, lf);
-    const an = lf.animate(frames || [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${to}deg)` }], { duration: dur, easing: 'cubic-bezier(.45,.05,.25,1)', fill: 'forwards' });
+    const an = lf.animate(frames || [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${to}deg)` }], { duration: dur, easing: 'cubic-bezier(.22,.7,.2,1)', fill: 'forwards' });
     S.leaf = { els: [lf, ...under], an };
     // frame times of the first measured 3D turn: a slow device is moved to the flat turn for good
     if (saved.flat === undefined && !saved.measured) {
@@ -129,7 +130,7 @@
     flow.classList.toggle('snap', !move || (leaf && old !== 0));
     flow.style.transform = `translate3d(${-p * S.stride + shift}px,0,0)`;
     bk.classList.toggle('single', shift !== 0);
-    book.classList.toggle('closed', S.n === 2 && p === 0);
+    book.classList.toggle('closed', S.n === 2 && p === 0); book.classList.toggle('at-cover', p === 0);
     const prog = S.total > 2 ? p / (S.total - 2) : 0;
     book.style.setProperty('--tl', (2 + prog * 9).toFixed(1) + 'px'); book.style.setProperty('--tr', (2 + (1 - prog) * 9).toFixed(1) + 'px');
     if (move && !leaf) {
@@ -272,25 +273,22 @@
     const t0 = +saved.t > 0 ? +saved.t : 0;
     if (t0) { A.pend = t0; try { audio.currentTime = t0; } catch (e) {} }
 
-    // chapter title: static when it fits; slides to and fro only when it overflows (never cut with an ellipsis)
+    // chapter title: set in full, wrapping to a second line; nothing slides
     let shown = '';
-    const setTitle = (txt) => {
+    const setTitle = (txt, full) => {
       if (txt === shown) return; shown = txt;
-      try { if ('mediaSession' in navigator && navigator.mediaSession.metadata) { navigator.mediaSession.metadata.title = txt; } } catch (e) {}
-      const inner = chEl.firstElementChild; inner.textContent = txt;
-      chEl.classList.remove('mq');
-      requestAnimationFrame(() => { const over = inner.scrollWidth - chEl.clientWidth; if (over > 4 && !reduced()) { chEl.style.setProperty('--sh', -(over) + 'px'); chEl.style.setProperty('--mq', Math.max(5, over / 22) + 's'); chEl.classList.add('mq'); } });
+      try { if ('mediaSession' in navigator && navigator.mediaSession.metadata) { navigator.mediaSession.metadata.title = full || txt; } } catch (e) {}
+      chEl.textContent = txt;
     };
     syncUI = () => {
       const t = A.pend && audio.paused && !audio.currentTime ? A.pend : audio.currentTime, d = dur();
       seek.max = d; seek.value = t; seek.style.setProperty('--p', (t / d * 100) + '%');
-      timeEl.textContent = `${fmt(t)} / ${fmt(d)}`;
-      const c = chAt(t); setTitle(`${c.label} — ${c.title}`);
+      const c = chAt(t); timeEl.textContent = `${c.label} · ${fmt(t)} / ${fmt(d)}`; setTitle(c.title, `${c.label} — ${c.title}`);
       seek.setAttribute('aria-valuetext', `${fmt(t)} of ${fmt(d)}, ${c.label}`);
       if (performance.now() - A.saveAt > 2000) { A.saveAt = performance.now(); keep({ t }); }
       if (A.ra) follow(t);
     };
-    const setPlayIcon = () => { playB.innerHTML = audio.paused ? ICON.play : ICON.pause; playB.setAttribute('aria-label', label()); };
+    const setPlayIcon = () => { playB.innerHTML = audio.paused ? ICON.play : ICON.pause; playB.setAttribute('aria-label', label()); playB.setAttribute('aria-pressed', String(!audio.paused)); player.classList.toggle('playing', !audio.paused); };
     // the dawn behind the book breathes with the narration (same-origin audio only, so playback is never rerouted when it is remote)
     const AMP = { ctx: null, an: null, buf: null, v: 0 };
     const wire = () => {
@@ -450,6 +448,9 @@
   // the dawn behind the book leans with the pointer
   const scene = $('.rd-scene');
   if (scene && !calm()) addEventListener('pointermove', (e) => { scene.style.setProperty('--px', (e.clientX / innerWidth * 2 - 1).toFixed(3)); scene.style.setProperty('--py', (e.clientY / innerHeight * 2 - 1).toFixed(3)); }, { passive: true });
+
+  // the arrival veil is skipped by the first touch, key or scroll
+  ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach((t) => addEventListener(t, () => root.classList.add('went'), { once: true, passive: true }));
 
   // ───────── open ─────────
   const wantPaged = saved.mode !== 'scroll';
