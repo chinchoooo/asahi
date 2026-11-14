@@ -44,7 +44,7 @@ html.dawn .hero-scene::after{opacity:.95}
 /* the wordmark sets the scale of everything beside it: the sun is .7em, tucked behind the dot of the last i */
 .mark{position:relative;display:block;width:fit-content;font-size:var(--wm);line-height:.9;transform:translate3d(calc(var(--x)*1.1vw),calc(var(--y)*.8vh),0) rotate(-3deg);transform-origin:0 70%}
 .word{display:block;font:700 1em/.9 var(--hand);letter-spacing:-.02em;color:var(--text);text-shadow:0 2px 40px rgba(0,0,0,.55);margin-left:-.04em;white-space:nowrap}
-.word span{display:inline-block;animation:in var(--d3) var(--ease) backwards;animation-delay:calc(var(--i) * 60ms + .1s)}
+.word span{display:inline-block;animation:in var(--d3) var(--ease) backwards;animation-delay:calc(var(--i) * 50ms + .05s)}
 .sun{--t:.2s;font-size:inherit;position:absolute;width:.7em;aspect-ratio:1;right:-.4em;top:-.36em;z-index:-1;border-radius:50%;border:0;padding:0;background:var(--sun);opacity:.94;cursor:pointer;transition:transform var(--d3) var(--ease)}
 /* a hit area wider than the disc, so a thumb finds it */
 .sun::before{content:"";position:absolute;inset:-12%;border-radius:50%}
@@ -53,7 +53,7 @@ html.dawn .sun{transform:translateY(-.07em)}
 html.dawn .sun:active{transform:translateY(-.05em) scale(.93)}
 html .sun.pop{animation:pop var(--d2) var(--ease)}
 @keyframes pop{40%{scale:1.07}}
-.sun-note{--t:.5s;position:absolute;right:calc(var(--wm) * .3 + 1.1rem);top:calc(var(--wm) * -.25);z-index:1;align-items:center;gap:var(--s2);color:var(--sun);font:700 1.25rem/1 var(--hand);white-space:nowrap;rotate:-4deg;pointer-events:none;text-shadow:0 1px 12px #000;display:none}
+.sun-note{--t:.25s;position:absolute;right:calc(var(--wm) * .3 + 1.1rem);top:calc(var(--wm) * -.25);z-index:1;align-items:center;gap:var(--s2);color:var(--sun);font:700 1.25rem/1 var(--hand);white-space:nowrap;rotate:-4deg;pointer-events:none;text-shadow:0 1px 12px #000;display:none}
 .sun-note svg{order:2;transform:scaleX(-1) rotate(10deg)}
 .sun-note svg,.note svg{width:2.6rem;height:1.7rem;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
@@ -63,7 +63,7 @@ html .sun.pop{animation:pop var(--d2) var(--ease)}
 .lede{margin-top:var(--s5);max-width:30ch;font-size:clamp(1.2rem,1.05rem + .45vw,1.7rem);line-height:1.5;color:var(--text);text-wrap:balance;--t:.22s}
 .lede em{color:var(--sun)}
 .lede span{text-wrap:pretty}
-.cta{--t:.3s;display:flex;flex-wrap:wrap;gap:var(--s3) var(--s6);align-items:center;margin-top:var(--s5)}
+.cta{--t:.26s;display:flex;flex-wrap:wrap;gap:var(--s3) var(--s6);align-items:center;margin-top:var(--s5)}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:3.25rem;background:var(--sun);color:var(--ink);font:700 1.5rem/1 var(--hand);padding:0 var(--s6);border-radius:var(--r3) var(--r3) var(--r3) 8px;transition:transform var(--d1) var(--ease)}
 .btn:active{transform:scale(.97)}
 .alt{display:inline-flex;align-items:center;min-height:var(--tap);font:700 1.4rem/1 var(--hand);color:var(--text);transition:color var(--d1) var(--ease),transform var(--d1) var(--ease)}
@@ -153,7 +153,7 @@ html .sun.pop{animation:pop var(--d2) var(--ease)}
 .story-cta{position:absolute;white-space:nowrap;z-index:3;left:50%;bottom:clamp(var(--s5),7vh,4rem);transform:translateX(-50%);opacity:calc(var(--o) * 3 - 1.7)}
 .story-cta:focus-within{opacity:1}
 .scrollhint{position:absolute;z-index:3;right:clamp(var(--s4),6vw,6rem);bottom:clamp(var(--s5),7vh,4rem);color:var(--sun);font-size:1.6rem;transform:rotate(-3deg);opacity:calc(1 - var(--o) * 6)}
-@media(max-width:700px){.beats{top:16%;left:var(--s5);width:12ch}.story-h{top:30%}.story .b3-i{transform:rotateX(calc(7deg - var(--o) * 5deg)) rotateY(calc(-30deg + var(--o) * 27deg)) translateX(calc(var(--w) * .38 * var(--o)))}}
+@media(max-width:700px){.beats{top:16%;left:var(--s5);width:12ch}.story-h{top:30%}.story .b3-i{transform:rotateX(calc(7deg - var(--o) * 5deg)) rotateY(calc(-30deg + var(--o) * 27deg)) translateX(calc(var(--w) * .24 * var(--o)))}}
 @media(min-width:1000px){.story .b3{margin-left:clamp(0px,14vw,16rem)}}
 
 /* the curtain into the reader */

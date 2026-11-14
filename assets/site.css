@@ -33,7 +33,7 @@ a,button,summary{touch-action:manipulation;-webkit-tap-highlight-color:transpare
 
 /* the 404: the same night, one line, the way back */
 .nf{min-height:100svh;display:grid;place-content:center;justify-items:center;gap:var(--s5);padding:var(--s7) var(--gut);text-align:center;position:relative;isolation:isolate;overflow:clip}
-.nf::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(62vw,340px);aspect-ratio:1;margin:calc(min(62vw,340px) / -2 - 3rem) 0 0 calc(min(62vw,340px) / -2);border-radius:50%;background:var(--sun);opacity:.14;animation:nf-in var(--d3) var(--ease) backwards}
+.nf::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:min(62vw,340px);aspect-ratio:1;margin:calc(min(62vw,340px) / -2 - 3rem) 0 0 calc(min(62vw,340px) / -2);border-radius:50%;background:var(--sun);opacity:.2;animation:nf-in var(--d3) var(--ease) backwards}
 .nf h1{font:700 clamp(4rem,22vw,9rem)/.9 var(--hand);transform:rotate(-3deg)}
 .nf p{font-size:1.3rem;color:var(--muted);max-width:24ch;text-wrap:balance}
 .nf a{display:inline-flex;align-items:center;min-height:3.25rem;padding:0 var(--s6);background:var(--sun);color:var(--ink);font:700 1.5rem/1 var(--hand);border-radius:var(--r3) var(--r3) var(--r3) 8px;transition:transform var(--d1) var(--ease)}
